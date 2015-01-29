@@ -27,6 +27,7 @@ set -e
 destination="$1"
 ui_script="$2"
 
+echo $ui_script
 function main {
   # Load configuration
   # Not in a separate function because you can't exort arrays
@@ -48,10 +49,12 @@ function main {
   _check_destination
   _check_ui_script
   _close_sim
-  _reset_all_sim
-  _xcode clean build
+ # _reset_all_sim
+  _xcode clean build 
+ 
 
   for simulator in "${simulators[@]}"; do
+    _fruitstrap_install "$simulator"
     for language in $languages; do
       _clean_trace_results_dir
       _run_automation "$ui_script" "$language" "$simulator"
@@ -70,10 +73,10 @@ tmp_dir="/tmp"
 build_dir="$tmp_dir/screen_shooter"
 bundle_dir="$build_dir/app.app"
 trace_results_dir="$build_dir/traces"
+fruitstrap_dir="/Users/twhyte/Documents/workspace/fruitstrap"
 
 function _check_destination {
   # Abort if the destination directory already exists. Better safe than sorry.
-
   if [ -z "$destination" ]; then
     destination="$HOME/Desktop/screenshots"
   fi
@@ -133,12 +136,21 @@ function _xcode {
     cp -r "$build_dir/build/$base.app" "$build_dir"
     bundle_dir="$build_dir/$base.app"
   else
-    xcodebuild -sdk "iphonesimulator$ios_version" \
+#    xcodebuild -sdk "iphonesimulator$ios_version" \
+#     xcodebuild -sdk "iphoneos" \
+     xcodebuild -sdk "iphoneos$ios_version" \
+      -scheme "Live Link" \
       CONFIGURATION_BUILD_DIR=$build_dir \
       PRODUCT_NAME=app \
     "$@"
   fi
 }
+
+function _fruitstrap_install {
+  # Use fruitstrap to install the app onto the physical device
+  simulator=$1
+  $fruitstrap_dir/fruitstrap -i "$simulator" -b "$bundle_dir"
+} 
 
 function _clean_trace_results_dir {
   # Removes the trace results directory. We need to do this because Instruments
@@ -192,6 +204,8 @@ function _copy_screenshots {
 function _reset_all_sim {
   # Reset all apps and data on from all iOS Simulators
   # Attention: Simulator can only be reset if it is not opend
+   #| grep Silver \
+   #| grep Simulator | grep -o "[0-9a-f]\{12,\}" \
   instruments -s devices \
    | grep Simulator \
    | grep -o "[0-9A-F]\{8\}-[0-9A-F]\{4\}-[0-9A-F]\{4\}-[0-9A-F]\{4\}-[0-9A-F]\{12\}" \
