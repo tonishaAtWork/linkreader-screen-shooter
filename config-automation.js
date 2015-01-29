@@ -10,6 +10,7 @@
 
 // Now, we simply drive the application! For more information, check out my
 // resources on UI Automation at http://cocoamanifest.net/features
+UIALogger.logStart("config-automation script start");
 var target = UIATarget.localTarget();
 UIALogger.logDebug("Target is " + target.frontMostApp().name());
 var window = target.frontMostApp().mainWindow();
@@ -17,7 +18,6 @@ var window = target.frontMostApp().mainWindow();
 var target = UIATarget.localTarget();
 var linkReaderApp = target.frontMostApp();
 var window = linkReaderApp.mainWindow();
-
 var getStartedButton = window.buttons()["Get Started"];
 if (getStartedButton.isValid()) {
 // screenshot of splash screen
@@ -30,7 +30,17 @@ captureLocalizedScreenshot("helpUsImprove");
 window.buttons()["Continue"].tap();
 }
 
-UIATarget.localTarget().delay(2);
+// wait for first tool tip
+UIATarget.localTarget().delay(14);
+
+// screenshot of tooltips
+var toolTipCount = 4; 
+for (var i = 0; i < toolTipCount; ++i) {
+  captureLocalizedScreenshot("tooltip " + (i+1));
+  UIATarget.localTarget().delay(6.5);
+}
+
+
 // screenshot of scan screen
 captureLocalizedScreenshot("scan");
 UIATarget.localTarget().delay(2);
@@ -65,12 +75,29 @@ tableView.visibleCells()["Settings"].tap();
 UIATarget.localTarget().delay(2);
 captureLocalizedScreenshot("settings");
 
+// screenshot of what can I scan
 target.frontMostApp().navigationBar().buttons()["back icon"].tap();
 tableView.visibleCells()["What can I scan?"].tap();
 UIATarget.localTarget().delay(2);
 captureLocalizedScreenshot("whatCanIScan");
-
+// screenshot of feedback
+// TODO: clean up code.  Feedback and anything else you can't exit with
+//       the back button should probably be in a separate file
 target.frontMostApp().navigationBar().buttons()["back icon"].tap();
 tableView.visibleCells()["Send us feedback"].tap();
 UIATarget.localTarget().delay(2);
 captureLocalizedScreenshot("feedback");
+
+                                                
+// exit feedback 
+UIATarget.localTarget().delay(1);
+var navButtons = target.frontMostApp().mainWindow().navigationBar().buttons()["Cancel"].tap();
+UIATarget.localTarget().delay(1);
+target.frontMostApp().actionSheet().collectionViews()[0].cells()["Delete Draft"].tap();
+
+// go to scan screen
+UIATarget.localTarget().delay(1);
+tableView.visibleCells()["Scan"].tap();
+
+
+UIALogger.logPass();
